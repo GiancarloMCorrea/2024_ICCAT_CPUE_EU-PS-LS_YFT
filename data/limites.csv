@@ -1,0 +1,5 @@
+ORP,DBizena,TBizena,LIMITE1,LIMITE2,LIMITE3,LIMITE4,xlim1,xlim2,xgap,ylim1,ylim2,ygap,deplonlim1,deplonlim2,deplatlim1,deplatlim2,Nx,ocean
+ICCAT,AOFAD,AObuoy_data,500,500,500,500,-80,20,20,-30,30,10,-30,20,-20,20,6,Atlantic
+IOTC,IOFAD,IObuoy_data,550,425,350,350,30,110,20,-30,30,10,20,70,-20,10,5,Indian
+IATTC,EPOFAD,EPObuoy_data,0,0,0,350,-150,-70,20,-30,30,10,-150,-70,-20,20,5,Eastern Pacific
+WCPFC,WPOFAD,WPObuoy_data,0,0,0,350,140,210,20,-30,30,10,150,210,-20,20,4,Western Pacific
