@@ -14,6 +14,7 @@ saveRDS(LL, 'extent_LL.rds')
 LL = readRDS('extent_LL.rds')
 region_extent = data.frame(long=LL$x, lat=LL$y)
 str(region_extent)
+saveRDS(region_extent, 'region_extent.rds')
 
 region_extent = rbind(region_extent, region_extent[1,])
 ## https://www.maths.lancs.ac.uk/~rowlings/Teaching/Sheffield2013/cheatsheet.html
