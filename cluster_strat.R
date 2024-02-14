@@ -1,18 +1,18 @@
 rm(list = ls())
-
-require(distances)
-require(fpc)
-require(sf)
+library(distances)
+library(fpc)
+library(sf)
+library(ggplot2)
+library(dplyr)
+theme_set(theme_classic())
 
 data_folder = 'data'
 plot_folder = 'plots'
 params = list(species = "SKJ", ORP = "IOTC")
 
 # -------------------------------------------------------------------------
-# source('data_preparation.R')
 # Grid size already defined in data_preparation.R
 load(file.path(data_folder, 'joinDF.RData'))
-
 
 # -------------------------------------------------------------------------
 # Map information for plotting:
@@ -21,11 +21,9 @@ limites = subset(limites, ORP == params$ORP)
 xLim = c(limites$xlim1, limites$xlim2)
 yLim = c(limites$ylim1, limites$ylim2)
 worldmap = map_data("world")
-setnames(worldmap, c("X", "Y", "PID", "POS", "region", "subregion"))
-worldmap = clipPolys(worldmap, xlim=xLim, ylim=yLim, keepExtra=TRUE)
+colnames(worldmap) = c("X", "Y", "PID", "POS", "region", "subregion")
 yBreaks = seq(from = -20, to = 20, by = 20)
 xBreaks = seq(from = 40, to = 100, by = 20)
-
 
 # -------------------------------------------------------------------------
 # Average catch per grid across years:
@@ -44,14 +42,14 @@ save(clust_area_df, file = file.path(data_folder, 'clust_area_df.RData'))
 
 # Plot clusters:
 ggplot() +  
-  geom_sf(data = catch_grid_df, aes(fill = cluster), color = 'gray80') +
-  scale_fill_brewer(palette = 'Set1') +
+  geom_sf(data = catch_grid_df, aes(fill = cluster, color = cluster)) +
+  scale_fill_brewer(palette = 'Set1') + scale_color_brewer(palette = 'Set1') +
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-  coord_sf(expand = FALSE) +
+  coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.9, 0.2)) +
-  labs(fill = "Cluster")
+  labs(fill = "Cluster") + guides(color = 'none') 
 ggsave(filename = file.path(plot_folder, 'grid_cluster.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
 
 # Remove geometry from catch_grid_df for model scripts:

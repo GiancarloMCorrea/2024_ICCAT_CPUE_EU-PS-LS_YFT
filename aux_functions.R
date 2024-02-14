@@ -1,6 +1,8 @@
 
 calculate_moran = function(lon, lat, zval, output_type = 'observed') {
 
+  library(ape)
+  library(sp)
   these_dist = sp::spDists(x = cbind(lon, lat))
   these_dist_inv = 1/these_dist
   these_dist_inv[which(is.infinite(these_dist_inv))] = 0
@@ -12,6 +14,7 @@ calculate_moran = function(lon, lat, zval, output_type = 'observed') {
 
 calculate_clarkevans = function(lon, lat, output_type = 'statistic') {
   
+  library(sf)
   points = data.frame(lon = lon, lat = lat)
   MyPoints_temp = points %>% st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
   MyPoints_trnsf = sf::st_transform(MyPoints_temp, 32619)
@@ -24,6 +27,7 @@ calculate_clarkevans = function(lon, lat, output_type = 'statistic') {
 
 calculate_covarea = function(dat) {
   
+  library(sf)
   tmp_df = dat %>% 
     st_as_sf(coords = c("lon", "lat"), crs = 4326) %>% 
     st_set_crs("+proj=utm +zone=42N +datum=WGS84 +units=km") 
@@ -59,3 +63,13 @@ hurdle_fn = function(data, i) {
   exp(log(bin_coef) + log(gamma_coef))
 }
 
+slope_grid = function(df) {
+  n_quarters = length(unique(df$yyqq))
+  if(n_quarters > n_all_quarters*0.4) { # cover at least 40% of yyqq
+    mod1 = lm(log(catch + 1) ~ time, data = df)
+    slopeMod = coef(mod1)[2] 
+  } else {
+    slopeMod = NA
+  }
+  return(slopeMod)
+}

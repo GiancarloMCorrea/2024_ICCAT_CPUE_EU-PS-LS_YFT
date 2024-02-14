@@ -1,6 +1,13 @@
 rm(list = ls())
-require(plyr)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(DescTools)
+library(gridExtra)
+library(viridis)
+library(purrr)
 source('aux_functions.R')
+theme_set(theme_classic())
 
 data_folder = 'data'
 plot_folder = 'plots'
@@ -24,12 +31,10 @@ limites = read.table(file.path(data_folder, "limites.csv"), header=TRUE,sep=",",
 limites = subset(limites, ORP == params$ORP)
 xLim = c(limites$xlim1, limites$xlim2)
 yLim = c(limites$ylim1, limites$ylim2)
-worldmap = map_data("world")
-data.table::setnames(worldmap, c("X", "Y", "PID", "POS", "region", "subregion"))
-worldmap = PBSmapping::clipPolys(worldmap, xlim=xLim, ylim=yLim, keepExtra=TRUE)
-save(worldmap, file.path(data_folder, 'worldmap.RData'))
 yBreaks = seq(from = -20, to = 20, by = 20)
 xBreaks = seq(from = 40, to = 100, by = 20)
+worldmap = map_data("world")
+colnames(worldmap) = c("X", "Y", "PID", "POS", "region", "subregion")
 
 # -------------------------------------------------------------------------
 # Histograms
@@ -49,19 +54,19 @@ ggsave(filename = file.path(plot_folder, 'hist_catch.jpg'), plot = hist_plot,
 ind_df = datos_sp %>% group_by(year, quarter) %>% 
             dplyr::summarise(moran = calculate_moran(lon = lon, lat = lat, zval = catch),
                       gini = Gini(x = catch),
-                      clark = calculate_clarkevans(lon = lon, lat = lat),
+                      #clark = calculate_clarkevans(lon = lon, lat = lat),
                       covarea = calculate_covarea(cur_data()))
-plot_df = tidyr::gather(ind_df, 'variable', 'value', 3:6)
+plot_df = tidyr::gather(ind_df, 'variable', 'value', 3:ncol(ind_df))
 plot_df = plot_df %>% mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4)
-plot_df$variable = factor(plot_df$variable, levels = c('moran', 'gini', 'clark', 'covarea'),
-                               labels = c('Moran index', 'Gini index', 'Clark index', 'Covered area'))
+plot_df$variable = factor(plot_df$variable, levels = c('moran', 'gini', 'covarea'),
+                               labels = c('Moran index', 'Gini index', 'Covered area'))
 
 ggplot(data = plot_df, aes(time, value)) +
   geom_point() +
   geom_line() +
   ylab('Value') + xlab('Time') +
-  facet_wrap(~ variable, scales = 'free_y', ncol = 2)
-ggsave(filename = file.path(plot_folder, 'spat_ind.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
+  facet_wrap(~ variable, scales = 'free_y', ncol = 3)
+ggsave(filename = file.path(plot_folder, 'spat_ind.jpg'), width = 190, height = 70, units = 'mm', dpi = 500)
 
 
 # -------------------------------------------------------------------------
@@ -91,15 +96,15 @@ p3 = ggplot(plot_df, aes(time, prop_zero)) +
 
 merged_plot = grid.arrange(p1, p2, p3)
 ggsave(filename = file.path(plot_folder, 'time_catch.jpg'), plot = merged_plot,
-       width = 120, height = 150, units = 'mm', dpi = 500)
+       width = 120, height = 170, units = 'mm', dpi = 500)
 
 # All grids and points --------------------------------------------------------
 
 ggplot() +  
   geom_sf(data = MyGrid, fill = 'white') + 
-  geom_sf(data = MyPoints, color = 'black') + 
+  geom_sf(data = MyPoints, color = 'black', alpha = 0.5) + 
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-  coord_sf(expand = FALSE) +
+  coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) 
 ggsave(filename = file.path(plot_folder, 'grid_sets.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
@@ -109,7 +114,7 @@ ggsave(filename = file.path(plot_folder, 'grid_sets.jpg'), width = 190, height =
 ggplot() +  
   geom_sf(data = joinDF, fill = 'white') + 
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-  coord_sf(expand = FALSE) +
+  coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) 
 ggsave(filename = file.path(plot_folder, 'grid_extrapo.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
@@ -120,16 +125,16 @@ ggsave(filename = file.path(plot_folder, 'grid_extrapo.jpg'), width = 190, heigh
 # Summarise data to plot:
 plot_df = joinDF %>% group_by(ID) %>% dplyr::summarise(n_obs=n())
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = plot_df, aes(fill = n_obs, color = n_obs)) + 
   scale_fill_viridis() + scale_color_viridis() +
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-  coord_sf(expand = FALSE) +
+  coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.9, 0.2)) +
-  labs(fill = "N_obs") + guides(color = 'none') 
-ggsave(filename = file.path(plot_folder, 'grid_eff.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
+  labs(fill = "Effort") + guides(color = 'none') 
+ggsave(filename = file.path(plot_folder, 'grid_eff.jpg'), plot = p1, width = 190, height = 150, units = 'mm', dpi = 500)
 
 # Effort per grid (per year-quarter) -----------------------------------------
 
@@ -137,17 +142,17 @@ ggsave(filename = file.path(plot_folder, 'grid_eff.jpg'), width = 190, height = 
 plot_df = joinDF %>% group_by(ID, year, quarter) %>% dplyr::summarise(n_obs=n()) %>% mutate(yyqq = paste(year, quarter, sep = '-'))
 plot_df = plot_df %>% filter(!is.na(yyqq))
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = plot_df, aes(fill = n_obs, color = n_obs)) + 
   scale_fill_viridis() + scale_color_viridis() +
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-  coord_sf(expand = FALSE) +
+  coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = 'bottom') +
-  labs(fill = "N_obs") + guides(color = 'none') +
+  labs(fill = "Effort") + guides(color = 'none') +
   facet_wrap(~ factor(yyqq), ncol = 8)
-ggsave(filename = file.path(plot_folder, 'grid_eff_time.jpg'), width = 190, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'grid_eff_time.jpg'), plot = p1, width = 190, height = 170, units = 'mm', dpi = 500)
 
 
 # Avg catch per grid (aggregated) -----------------------------------------
@@ -155,16 +160,16 @@ ggsave(filename = file.path(plot_folder, 'grid_eff_time.jpg'), width = 190, heig
 # Summarise data to plot:
 plot_df = joinDF %>% group_by(ID) %>% dplyr::summarise(avg_catch=mean(catch))
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = plot_df, aes(fill = avg_catch, color = avg_catch)) + 
   scale_fill_viridis() + scale_color_viridis() + 
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-  coord_sf(expand = FALSE) +
+  coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.9, 0.2)) +
   labs(fill = "Avg catch (t)") + guides(color = 'none')
-ggsave(filename = file.path(plot_folder, 'grid_catch.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'grid_catch.jpg'), plot = p1, width = 190, height = 150, units = 'mm', dpi = 500)
 
 
 # Avg catch per grid (per year-quarter) -------------------------------------------
@@ -173,33 +178,33 @@ ggsave(filename = file.path(plot_folder, 'grid_catch.jpg'), width = 190, height 
 plot_df = joinDF %>% group_by(ID, year, quarter) %>% dplyr::summarise(avg_catch=mean(catch)) %>% mutate(yyqq = paste(year, quarter, sep = '-'))
 plot_df = plot_df %>% filter(!is.na(yyqq))
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = plot_df, aes(fill = avg_catch, color = avg_catch)) + 
   scale_fill_viridis() + scale_color_viridis() + 
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-  coord_sf(expand = FALSE) +
+  coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = 'bottom') +
   labs(fill = "Avg catch (t)") + guides(color = 'none') +
   facet_wrap(~ factor(yyqq), ncol = 8)
-ggsave(filename = file.path(plot_folder, 'grid_catch_time.jpg'), width = 190, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'grid_catch_time.jpg'), plot = p1, width = 190, height = 170, units = 'mm', dpi = 500)
 
 # Prop of zeros (aggregated) -----------------------------------------
 
 # Summarise data to plot:
 plot_df = joinDF %>% group_by(ID) %>% dplyr::summarise(prop_zero=length(which(catch == 0))/n())
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = plot_df, aes(fill = prop_zero, color = prop_zero)) + 
   scale_fill_viridis() + scale_color_viridis() + 
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-  coord_sf(expand = FALSE) +
+  coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.9, 0.2)) +
   labs(fill = "Prop of zeros") + guides(color = 'none')
-ggsave(filename = file.path(plot_folder, 'grid_zeroprop.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'grid_zeroprop.jpg'), plot = p1, width = 190, height = 150, units = 'mm', dpi = 500)
  
 
 # Prop zero per grid (per year-quarter) -------------------------------------------
@@ -208,17 +213,17 @@ ggsave(filename = file.path(plot_folder, 'grid_zeroprop.jpg'), width = 190, heig
 plot_df = joinDF %>% group_by(ID, year, quarter) %>% dplyr::summarise(prop_zero=length(which(catch == 0))/n()) %>% mutate(yyqq = paste(year, quarter, sep = '-'))
 plot_df = plot_df %>% filter(!is.na(yyqq))
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = plot_df, aes(fill = prop_zero, color = prop_zero)) + 
   scale_fill_viridis() + scale_color_viridis() + 
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-  coord_sf(expand = FALSE) +
+  coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = 'bottom') +
   labs(fill = "Prop of zeros") + guides(color = 'none') +
   facet_wrap(~ factor(yyqq), ncol = 8)
-ggsave(filename = file.path(plot_folder, 'grid_zeroprop_time.jpg'), width = 190, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'grid_zeroprop_time.jpg'), plot = p1, width = 190, height = 170, units = 'mm', dpi = 500)
 
 
 # -------------------------------------------------------------------------
@@ -306,26 +311,17 @@ plot_df = joinDF %>% mutate(yyqq = paste(year, quarter, sep = '-')) %>%
               mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4)
 n_all_quarters = length(unique(plot_df$yyqq))
 
-mods = plyr::dlply(plot_df, c("ID"), function(df) {
-  n_quarters = length(unique(df$yyqq))
-  if(n_quarters > n_all_quarters*0.4) { # cover at least 40% of yyqq
-    mod1 = lm(log(catch + 1) ~ time, data = df)
-    slopeMod = coef(mod1)[2] 
-  } else {
-    slopeMod = NA
-  }
-  return(slopeMod)
-})
+mods = plot_df %>% split(f = plot_df$ID) %>% 
+          purrr::map(~ slope_grid(.x))
 
-new_data = attr(mods, 'split_labels')
-new_data$slope = unlist(mods)
+new_data = data.frame(ID = as.numeric(names(mods)), slope = as.vector(unlist(mods)))
 MyGrid2 = left_join(MyGrid, new_data, by = 'ID')
 MyGrid2 = MyGrid2 %>% mutate(type_slope = if_else(slope < 0, true = -1, false = 1)) %>% na.omit
 
 ggplot() +  
   geom_sf(data = MyGrid2, aes(fill = factor(type_slope), alpha = abs(slope)), color = 'transparent') + 
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-  coord_sf(expand = FALSE) +
+  coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   theme(legend.position = c(0.9, 0.2)) +
   guides(fill="none", color = 'none', alpha=guide_legend(title = 'log(catch) trend')) +

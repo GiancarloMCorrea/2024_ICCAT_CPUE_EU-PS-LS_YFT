@@ -2,34 +2,10 @@ rm(list = ls())
 
 # -------------------------------------------------------------------------
 # Read libraries:
-library(reshape) 
-library(pander)
 library(ggplot2)
-library(ggExtra)
 library(dplyr)  
-library(lubridate) 
-library(gridExtra)
-library(spatstat)
-library(knitr) 
-library(mapplots)
-library(shapefiles)
-library(fields) 
-library(doBy)
-library(DescTools)
-library(texreg)
-library(maptools)
-library(geofacet)
-library(kableExtra)
 library(sf)
-library(MASS)
-library(lme4)
-library(BAI)
-library(data.table)
-library(PBSmapping) 
-library(scales)
-library(CCAMLRGIS)
 library(tibble)
-theme_set(theme_classic())
 source('aux_functions.R')
 
 # -------------------------------------------------------------------------
@@ -45,9 +21,10 @@ mydir = getwd()
 setwd(mydir)
 
 # Read data:
-main_df = readRDS(file = "data/ecd_fr_es_indian_2010_2021_all_info_v2023_08_14.merge.RDS")
-main_df = main_df  %>%  as_tibble()  %>%  dplyr::select(-the_geom) # remove the_geom variable
+main_df = readRDS(file = file.path(data_folder, "ecd_fr_es_indian_2010_2021_all_info_v2023_08_14.merge.RDS"))
+main_df = main_df  %>%  dplyr::as_tibble()  %>%  dplyr::select(-the_geom) # remove the_geom variable
 
+# Remove duplicated rows:
 main_df$dup = duplicated(main_df) # remove duplicates 
 main_df = subset(main_df, dup==FALSE)
 
@@ -61,7 +38,6 @@ main_df = main_df %>% mutate(yyqq = as.factor(paste(annee_de_peche, trimestre, s
                              lon = longitude_deg + longitude_min/60)
 main_df = main_df %>% mutate(lat = if_else(quadrant %in% c(2,3), true = lat*-1, false = lat),
                              lon = if_else(quadrant %in% c(3,4), true = lon*-1, false = lon))
-#main_df$area = latlon_to_code(6, main_df$lat, main_df$lon) # GIS format
 
 # Select only one stock:
 if(params$species=="SKJ") {main_df$catch = main_df$capture_skj_corrigee}
@@ -86,7 +62,8 @@ main_df$capacity = as.numeric(main_df$capacity)
 myvars = c("year", "quarter", "h_sunrise", "lat", "lon", "pays", "den_water",
            "numbat", "capacity", "follow", "catch", "buoy_echo")
 main_df = main_df[myvars]
-main_df = main_df %>% mutate(follow_echo = factor(ifelse(follow == '1', buoy_echo, 'no follow'),
+main_df = main_df %>% mutate(den_water2 = scale(den_water)[,1], # scale to avoid convergence problems
+                             follow_echo = factor(ifelse(follow == '1', buoy_echo, 'no follow'),
                                                   levels = c("no follow","no echo","echo_1freq","echo_2freq"))) %>%
                 dplyr::select(-c(follow, buoy_echo)) # remove unused variables
 save(main_df, file = file.path(data_folder, 'main_df.RData'))
@@ -112,12 +89,12 @@ extraDF = joinDF %>% group_by(ID) %>% dplyr::summarise()
 extraDF = st_centroid(extraDF) %>% dplyr::mutate(lon = sf::st_coordinates(.)[,1], lat = sf::st_coordinates(.)[,2])
 save(extraDF, file = file.path(data_folder, 'extraDF.RData'))
 
-# Calculate portion on ocean for grids:
+# Calculate portion on ocean for grids (important when calculating CPUE stand):
 df_area_land = MyGrid %>% 
   group_by(ID) %>% 
   group_map(~ calculate_area_on_land(.x)) %>% 
   unlist() %>%
-  enframe(name = 'ID', value = 'area_on_land')
+  tibble::enframe(name = 'ID', value = 'area_on_land')
 MyGrid = left_join(MyGrid, df_area_land)
 MyGrid$grid_area = as.numeric(st_area(MyGrid))
 MyGrid = MyGrid %>% mutate(portion_on_ocean = 1 - (area_on_land/grid_area))
