@@ -1,44 +1,43 @@
 rm(list = ls())
-
 # -------------------------------------------------------------------------
 library(INLA)
-library(splancs)
 library(dplyr)
-library(lattice)
 library(sf)
 library(ggplot2)
 library(viridis)
 theme_set(theme_classic())
 
-my_border = readRDS('region_extent.rds')
+# my_border = readRDS('region_extent.rds')
 
+# -------------------------------------------------------------------------
 data_folder = 'data'
-plot_folder = 'plots'
+plot_folder = 'plots/inla'
 params = list(species = "SKJ", ORP = "IOTC")
 
-yBreaks = seq(from = -20, to = 20, by = 20)
-xBreaks = seq(from = 40, to = 100, by = 20)
+# -------------------------------------------------------------------------
+# Load some objects created before:
+load(file.path(data_folder, 'joinDF.RData'))
+load(file.path(data_folder, 'extraDF.RData'))
+load(file.path(data_folder, 'MyGrid.RData'))
+
+# -------------------------------------------------------------------------
+# Map information for plotting:
 limites = read.table(file.path(data_folder, "limites.csv"), header=TRUE,sep=",", na.strings="NA", dec=".", strip.white=TRUE)
 limites = subset(limites, ORP == params$ORP)
 xLim = c(limites$xlim1, limites$xlim2)
 yLim = c(limites$ylim1, limites$ylim2)
-grid_size = 1
-
-# -------------------------------------------------------------------------
-load(file.path(data_folder, 'joinDF.RData'))
-load(file.path(data_folder, 'extraDF.RData'))
-load(file.path(data_folder, 'MyGrid.RData'))
 worldmap = map_data("world")
-data.table::setnames(worldmap, c("X", "Y", "PID", "POS", "region", "subregion"))
+colnames(worldmap) = c("X", "Y", "PID", "POS", "region", "subregion")
+yBreaks = seq(from = -20, to = 20, by = 20)
+xBreaks = seq(from = 40, to = 100, by = 20)
 
 # -------------------------------------------------------------------------
 # Define dataset:
-model_df = joinDF %>% 
-  mutate(presence = catch > 0, den_water2 = scale(den_water)[,1], area_swept = 1,
+model_df = joinDF %>% mutate(presence = catch > 0,
          year2 = as.numeric(as.character(year)), quarter2 = as.numeric(as.character(quarter)),
          time = year2 + (quarter2-1)/4)
 st_geometry(model_df) = NULL
-model_df = model_df %>% filter(time >= 2020, presence == TRUE)
+model_df = model_df %>% filter(presence == TRUE)
 n_times = length(unique(model_df$time))
 
 # Create mesh
@@ -103,7 +102,7 @@ inla_mod_1 = inla(my_formula, family='lognormal', control.compute=list(cpo = TRU
                    data = inla.stack.data(stk_full),
                    control.predictor = list(A=inla.stack.A(stk_full), compute=TRUE), verbose = TRUE)
 
-
+save(inla_mod_1, file = 'inla_mod_1.RData')
 # Prepare data for inla
 # sdat = inla.stack(data = list(y = model_df$catch), 
 #                   A = list(1,A),
