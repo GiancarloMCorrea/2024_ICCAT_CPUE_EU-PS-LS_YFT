@@ -42,9 +42,7 @@ xBreaks = seq(from = 40, to = 100, by = 20)
 
 # Define dataset:
 model_df = joinDF %>% filter(catch > 0) %>%
-  mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4,
-         year2 = as.numeric(as.character(year)),
-         quarter2 = as.numeric(as.character(quarter)))
+  mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4)
 
 # Run model
 gam_st_mod_1 = gam(log(catch) ~ year + quarter + te(lon, lat, time, k = c(12,12,6)) +
@@ -95,7 +93,7 @@ ggsave(filename = file.path(plot_folder, 'grid_predictions_gamst_1.jpg'), width 
 PredTime = PredGrid %>% group_by(year, quarter) %>% dplyr::summarise(weighted = weighted.mean(cpue_pred, portion_on_ocean),
                                                               unweighted = mean(cpue_pred))
 PredTime = PredTime %>% mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4,
-                               model = 'gam_1')
+                               model = 'gamst_1')
 PredTime = tidyr::gather(PredTime, 'type_cpue', 'value', 3:4)
 
 # Plot time predictions:
