@@ -116,7 +116,6 @@ stk_p = inla.stack(
 stk_full = inla.stack(stk_e, stk_p)
 
 # Run model:
-#rprior = list(theta = list(prior = "pccor1", param = c(0, 0.9)))
 my_formula = y ~ 0 + b0 + den_water2 + capacity + h_sunrise + follow_echo + 
                   f(s, model = spde, group = s.group, control.group = list(model = 'ar1'))
                     
@@ -124,32 +123,7 @@ inla_mod_1 = inla(my_formula, family='lognormal', control.compute=list(cpo = TRU
                    data = inla.stack.data(stk_full),
                    control.predictor = list(A=inla.stack.A(stk_full), compute=TRUE), verbose = TRUE)
 
-save(inla_mod_1, file = 'inla_mod_1.RData')
-
-# Prepare data for inla
-# sdat = inla.stack(data = list(y = model_df$catch), 
-#                   A = list(1,A),
-#                   effects = list(data.frame(b0 = rep(1, nrow(model_df))), s = indexs),
-#                   tag = 'est')
-
-# Prediction matrix:
-# A = inla.spde.make.A(mesh, loc=coords)
-# Make SPDE:
-# spde =  inla.spde2.matern(mesh, alpha=2)  
-# iset = inla.spde.make.index(name = "spatial.field", spde$n.spde)
-# 
-# # Prepare data for inla
-# stk.dat = inla.stack(data=list(y = model_df$catch), A=list(A,1), 
-#                      effects = list(
-#                        list(i = 1:spde$n.spde), data.frame(Intercept = rep(1, nrow(model_df)))
-#                      ),
-#                      tag='dat')
-# 
-# # Run model:
-# my_formula = y ~ 0 + Intercept + f(i, model = spde) # Sin covariables
-# inla_mod_1 = inla(my_formula, family='lognormal', control.compute=list(cpo = TRUE, dic=TRUE),
-#                    data=inla.stack.data(stk.dat),
-#                    control.predictor=list(A=inla.stack.A(stk.dat), compute=TRUE), verbose = TRUE)
+# save(inla_mod_1, file = 'inla_mod_1.RData')
 
 # PREDDICIONES DE LOS RESULTADOS: -----------------------------------------
 
