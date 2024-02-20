@@ -142,7 +142,7 @@ predData$cpue_pred = predData$pres_pred*predData$pos_pred
 PredGrid = left_join(clust_area_df, predData, by = c('cluster'))
 PredGrid = PredGrid %>% mutate(yyqq = paste(year, quarter, sep = '-')) %>% na.omit
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = PredGrid, aes(fill = cpue_pred, color = cpue_pred)) + 
   scale_fill_viridis() + scale_color_viridis() +
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
@@ -152,19 +152,18 @@ ggplot() +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   facet_wrap(~ yyqq, ncol = 8) +
   labs(fill = "Predicted mean CPUE") + guides(color = 'none')
-ggsave(filename = file.path(plot_folder, 'grid_predictions_glmm_2.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'grid_predictions_glmm_2.jpg'), plot = p1, 
+       width = 190, height = 150, units = 'mm', dpi = 500)
 
 # Calculate index (weighted sum by area): or average?
-PredTime = PredGrid %>% group_by(year, quarter) %>% summarise(weighted = weighted.mean(cpue_pred, cluster_area),
-                                                              unweighted = mean(cpue_pred))
+PredTime = PredGrid %>% group_by(year, quarter) %>% summarise(value = sum(cpue_pred*cluster_area))
 PredTime = PredTime %>% mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4,
-                               model = 'glm_2')
-PredTime = tidyr::gather(PredTime, 'type_cpue', 'value', 3:4)
+                               model = 'glmm_2')
+# PredTime$value = scale(PredTime$value)[,1]
 
 # Plot time predictions:
-ggplot(data = PredTime, aes(x = time, y = value, color = factor(type_cpue))) +
+ggplot(data = PredTime, aes(x = time, y = value)) +
   geom_line() +
-  labs(color = 'CPUE type') +
   theme(legend.position = c(0.85, 0.15)) +
   ylab('Predicted CPUE (by quarter)') + xlab('Time')
 ggsave(filename = file.path(plot_folder, 'time_predictions_glmm_2.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)

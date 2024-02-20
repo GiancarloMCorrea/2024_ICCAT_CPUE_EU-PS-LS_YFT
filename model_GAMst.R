@@ -45,8 +45,8 @@ model_df = joinDF %>% filter(catch > 0) %>%
   mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4)
 
 # Run model
-gam_st_mod_1 = gam(log(catch) ~ year + quarter + te(lon, lat, time, k = c(12,12,6)) +
-                   s(den_water2,k=15) + s(capacity,k=7) + s(h_sunrise, k = 11) + follow_echo,
+gam_st_mod_1 = gam(log(catch) ~ year*quarter + te(lon, lat, time, k = c(12,12,6)) +
+                   den_water2 + capacity + h_sunrise + follow_echo,
                  data = model_df)
 
 # Plot and check
@@ -77,7 +77,7 @@ predData = predData %>% dplyr::select(-geometry)
 PredGrid = left_join(MyGrid, predData, by = c('ID'))
 PredGrid = PredGrid %>% mutate(yyqq = paste(year, quarter, sep = '-')) %>% na.omit
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = PredGrid, aes(fill = cpue_pred, color = cpue_pred)) + 
   scale_fill_viridis() + scale_color_viridis() +
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
@@ -87,20 +87,19 @@ ggplot() +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   facet_wrap(~ yyqq, ncol = 8) +
   labs(fill = "Predicted mean CPUE") + guides(color = 'none')
-ggsave(filename = file.path(plot_folder, 'grid_predictions_gamst_1.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'grid_predictions_gamst_1.jpg'), plot = p1, 
+       width = 190, height = 150, units = 'mm', dpi = 500)
 
 # Calculate index (weighted sum by area): or average?
-PredTime = PredGrid %>% group_by(year, quarter) %>% dplyr::summarise(weighted = weighted.mean(cpue_pred, portion_on_ocean),
-                                                              unweighted = mean(cpue_pred))
+PredTime = PredGrid %>% group_by(year, quarter) %>% summarise(value = sum(cpue_pred*grid_area*portion_on_ocean))
 PredTime = PredTime %>% mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4,
                                model = 'gamst_1')
-PredTime = tidyr::gather(PredTime, 'type_cpue', 'value', 3:4)
+# PredTime$value = scale(PredTime$value)[,1]
 
 # Plot time predictions:
-ggplot(data = PredTime, aes(x = time, y = value, color = factor(type_cpue))) +
+ggplot(data = PredTime, aes(x = time, y = value)) +
   geom_line() +
-  labs(color = 'CPUE type') +
   theme(legend.position = c(0.85, 0.15)) +
   ylab('Predicted CPUE (by quarter)') + xlab('Time')
-ggsave(filename = file.path(plot_folder, 'time_predictions_gam_1.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'time_predictions_gamst_1.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
 

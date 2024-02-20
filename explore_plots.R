@@ -74,7 +74,7 @@ ggsave(filename = file.path(plot_folder, 'spat_ind.jpg'), width = 190, height = 
 
 # Catch per set:
 p1 = ggplot(data = datos_sp, aes(yyqq, catch)) +
-  geom_boxplot(fill = 'skyblue', width = 0.5, outlier.size = 0.5) +
+  geom_boxplot(fill = 'skyblue', width = 0.5, outlier.size = 0.4) +
   ylab('Catch (tonnes) per set') + xlab(NULL) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 8))
 
@@ -94,9 +94,10 @@ p3 = ggplot(plot_df, aes(time, prop_zero)) +
   geom_line() +
   ylab('Proportion of null sets') + xlab('Time') 
 
-merged_plot = grid.arrange(p1, p2, p3)
+lay = matrix(c(1,1,2,3), ncol = 2, byrow = T)
+merged_plot = grid.arrange(p1, p2, p3, layout_matrix = lay)
 ggsave(filename = file.path(plot_folder, 'time_catch.jpg'), plot = merged_plot,
-       width = 120, height = 170, units = 'mm', dpi = 500)
+       width = 190, height = 160, units = 'mm', dpi = 500)
 
 # All grids and points --------------------------------------------------------
 
@@ -130,7 +131,7 @@ p1 = ggplot() +
   scale_fill_viridis() + scale_color_viridis() +
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
   coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
-  xlab(NULL) + ylab(NULL) +
+  xab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.9, 0.2)) +
   labs(fill = "Effort") + guides(color = 'none') 

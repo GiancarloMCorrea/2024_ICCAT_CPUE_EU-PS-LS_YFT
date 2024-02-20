@@ -7,8 +7,6 @@ library(ggplot2)
 library(viridis)
 theme_set(theme_classic())
 
-# my_border = readRDS('region_extent.rds')
-
 # -------------------------------------------------------------------------
 data_folder = 'data'
 plot_folder = 'plots/inla'
