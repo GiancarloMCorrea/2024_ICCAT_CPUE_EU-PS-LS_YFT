@@ -226,7 +226,6 @@ influ_stanPlot <- function(obj){
 }
 
 
-
 influ_stepPlot <- function(obj, panels=T, setpar=T){
 
   startCol = 6
@@ -254,10 +253,156 @@ influ_stepPlot <- function(obj, panels=T, setpar=T){
     with(obj$indices,{
       plot(NA,ylim=c(0,max(obj$indices[,cols])),xlim=xlim,las=1,ylab='Index',xlab=obj$labels[[obj$focus]],xaxt='n')
       for(col in cols) lines(as.integer(level),obj$indices[,col],type='o',pch=col-startCol+1,cex=1.25)
-      axis(side=1,at=1:length(level),labels=level)
+      axis(side=1,at=xlim[1]:xlim[length(xlim)],labels=level)
       legend('top',legend=names(obj$indices)[cols],pch=cols-startCol+1,pt.cex=1.25,bty='n')
     })
   }
   
 }
 
+
+influ_influPlot = function(obj, panels=T, setpar=T){
+  
+  cols = 2:ncol(obj$influences)
+  ylim=exp(range(obj$influences[,cols]))
+  if(panels){
+    if(setpar) par(mfrow=c(length(cols),1),mar=c(0,4,0,0),oma=c(4,1,1,1))
+    levels = as.integer(obj$influences$level)
+    xlim=range(levels)
+    for(col in cols){
+      plot(levels,exp(obj$influences[,col]),pch=16,cex=1.25,col='black',type='o',xaxt='n',las=1,ylab='Influence',ylim=ylim,xlim=xlim)
+      abline(h=1,lty=2)
+      legend('topleft',legend=names(obj$influences)[col],bty='n')
+    }
+    axis(side=1,at=xlim[1]:xlim[length(xlim)],labels=obj$influences$level)
+  }
+  else{
+    levels = as.integer(obj$influences$level)
+    xlim=range(levels)
+    with(obj$influences,{
+      plot(NA,ylim=ylim,xlim=xlim,las=1,ylab='Influence',xlab=obj$labels[[obj$focus]],xaxt='n')
+      for(col in cols) lines(as.integer(level),exp(obj$influences[,col]),type='o',pch=col,cex=1.25)
+      axis(side=1,at=xlim[1]:xlim[length(xlim)],labels=level)
+      legend('top',legend=names(obj$influences)[cols],pch=cols,pt.cex=1.25,bty='n')
+      abline(h=1,lty=2)
+    })
+  }
+  
+}
+
+
+influ_stepAndInfluPlot <- function(obj){
+  par(mfcol=c(ncol(obj$indices)-5,2),mar=c(0,5,0,0),oma=c(4,1,1,1))
+  influ_stepPlot(obj = obj, setpar=F)
+  #Create a blank plot in the top of the influences column for the row for the focus term.
+  plot.new()
+  influ_influPlot(obj = obj, setpar=F)
+}
+
+
+influ_cdiPlot <- function(obj, term, variable=NULL){
+  par(oma=c(1,1,1,1),cex.lab=1.25,cex.axis=1.25)
+  layout(matrix(c(1,1,0,2,2,3,2,2,3),3,3,byrow=TRUE))
+  
+  #Define levels of term on which coefficient and distribution plots will be based
+  #This is done by search for each column name in the data as a whole word in the
+  #each term. This allows for matching of terms like 'poly(log(var),3)' with 'var'
+  if(is.null(variable)){
+    for(name in names(obj$preds)){
+      match = grep(paste('([^[:alnum:]_])+',name,'([^[:alnum:]_])+',sep=''),paste('(',term,')')) # ([^\\w])+ Means ignore any 'word' character (alphanumerics plus underscore)
+      if(length(match)>0){
+        variable = name
+        break
+      }
+    }
+  }
+  if(is.null(variable)) stop('Unable to find a matching variable for term "',term,'". Please specify in the argument "variable".')
+  levels = obj$preds[,variable]
+  
+  #Numeric terms are cut into factors
+  if(is.numeric(levels)){
+    breaks = pretty(levels,30)
+    step = breaks[2]-breaks[1]
+    labels = breaks+step/2
+    breaks = c(breaks,breaks[length(breaks)]+step)
+    levels = cut(levels,breaks,labels=labels,include.lowest=T)
+  }
+  
+  #Reorder levels according to coefficients if necessary
+  if(obj$orders[[term]]=='coef'){
+    coeffs = aggregate(obj$preds[,paste('fit',term,sep='.')],list(levels),mean)
+    names(coeffs) = c('term','coeff')
+    coeffs = coeffs[order(coeffs$coeff),]
+    levels = factor(levels,levels=coeffs$term,ordered=T)
+  }
+  
+  #Coefficients
+  coeffs = aggregate(obj$preds[,paste(c('fit','se.fit'),term,sep='.')],list(levels),mean)
+  names(coeffs) = c('term','coeff','se')
+  coeffs = within(coeffs,{
+    lower = coeff-se
+    upper = coeff+se
+  })
+  
+  par(mar=c(0,5,3,0),las=1)
+  with(coeffs,{
+    xs = 1:max(as.integer(term))
+    ylim = c(min(exp(lower)),max(exp(upper)))
+    if(ylim[1]<0.5*min(exp(coeff))) ylim[1] = 0.5*min(exp(coeff))
+    if(ylim[2]>2*max(exp(coeff))) ylim[2] = 2*max(exp(coeff))
+    plot(as.integer(term),exp(coeff),xlim=range(xs),ylim=ylim,pch=2,cex=1.5,xaxt='n',ylab='',log='y')
+    mtext('Coefficient',side=2,line=4,las=0,cex=0.8)
+    abline(h=1,lty=2)
+    abline(v=xs,lty=1,col='grey')
+    segments(as.integer(term),exp(lower),as.integer(term),exp(upper))
+    arrows(as.integer(term),exp(lower),as.integer(term),exp(upper),angle=90,code=3,length=0.05)
+    axis(3,at=xs,labels=levels(term)[xs])
+  })
+  
+  #Distribution
+  distrs = aggregate(obj$preds[,1],list(levels,obj$preds[,obj$focus]),length)
+  names(distrs) = c('term','focus','count')
+  distrs = merge(distrs,aggregate(list(total=distrs$count),list(focus=distrs$focus),sum))
+  distrs$prop = with(distrs,count/total)
+  par(mar=c(5,5,0,0),las=1)
+  xlab = obj$labels[[variable]]
+  if(is.null(xlab)) xlab = variable
+  ylab= obj$labels[[obj$focus]]
+  if(is.null(ylab)) ylab = obj$focus
+  with(distrs,{
+    xs = 1:max(as.integer(term))
+    ys = 1:max(as.integer(focus))
+    plot(NA,xlim=range(xs),ylim=range(ys),xaxt='n',yaxt='n',xlab=xlab,ylab='')
+    abline(v=xs,lty=1,col='grey')
+    axis(1,at=xs,labels=levels(term)[xs])
+    abline(h=ys,lty=1,col='grey')
+    axis(2,at=ys,labels=levels(focus)[ys])
+    mtext(ylab,side=2,line=4,las=0,cex=0.8)
+    points(as.integer(term),as.integer(focus),cex=sqrt(prop)*12)
+  })
+  
+  #Influence
+  par(mar=c(5,0,0,3),las=1)
+  ys = 1:nrow(obj$influences)
+  with(obj$influences,{
+    plot(NA,xlim=range(exp(get(term))),ylim=range(ys),yaxt='n',xlab='Influence')
+    abline(h=ys,lty=1,col='grey')
+    abline(v=1,lty=2)
+    points(exp(get(term)),ys,type='o',pch=16,cex=1.8)
+    axis(4,at=ys,labels=level)
+  })
+  
+}
+
+
+influ_cdiPlotAll <- function(obj, done = function(term){
+  cat("cdiPlot for",term,". Press enter for next")
+  scan()
+}){
+  for(term in obj$terms) {
+    if(term!=obj$focus){
+      influ_cdiPlot(obj = obj, term)
+      done(term)
+    }
+  }
+}

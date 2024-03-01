@@ -15,6 +15,7 @@ calculate_moran = function(lon, lat, zval, output_type = 'observed') {
 calculate_clarkevans = function(lon, lat, output_type = 'statistic') {
   
   library(sf)
+  library(spatstat)
   points = data.frame(lon = lon, lat = lat)
   MyPoints_temp = points %>% st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
   MyPoints_trnsf = sf::st_transform(MyPoints_temp, 32619)
@@ -63,9 +64,9 @@ hurdle_fn = function(data, i) {
   exp(log(bin_coef) + log(gamma_coef))
 }
 
-slope_grid = function(df) {
-  n_quarters = length(unique(df$yyqq))
-  if(n_quarters > n_all_quarters*0.4) { # cover at least 40% of yyqq
+slope_grid = function(df, prop_obs = 0.4) {
+  n_quarters = length(unique(df$time))
+  if(n_quarters > n_all_quarters*prop_obs) { # cover at least 40% of yyqq
     mod1 = lm(log(catch + 1) ~ time, data = df)
     slopeMod = coef(mod1)[2] 
   } else {
@@ -73,3 +74,50 @@ slope_grid = function(df) {
   }
   return(slopeMod)
 }
+
+
+# Function to get CI for GLM:
+bootstrap_glm = function(models, group_factors, mod_df, pred_df, prop_size = 0.8, n_boot = 100) {
+  
+  # Prepare prediction matrix:
+  n_models = length(models)
+  pred_matrix = array(NA, dim = c(n_models, nrow(pred_df), n_boot))
+  
+  require(dplyr)
+  require(stringr)
+  for(j in 1:n_boot) {
+    sample_df = mod_df %>% group_by_at(group_factors) %>% sample_frac(size = prop_size)
+    
+    boot_models = list()
+    for(i in seq_along(models)) {
+      this_family = models[[i]]$family$family
+      this_formula = models[[i]]$formula
+      this_link = models[[i]]$family$link
+      resp_var_name = rownames(attr(models[[i]]$terms, 'factors'))[1]
+      resp_var_name = str_remove_all(resp_var_name, paste(c('log', '\\(', '\\)'), collapse = "|"))
+      check_log = substr(x = this_formula, start = 1, stop = 3) # way to check if response variable has been log()
+      # Run model and make predictions:
+      if(check_log == 'log' | this_link == 'log') { 
+        boot_models[[i]] = glm(formula = this_formula, data = sample_df %>% filter(!!as.symbol(resp_var_name) > 0), family = this_family) 
+        # This way does not work with different links. Check this later
+        pred_matrix[i,,j] = exp(predict(boot_models[[i]], newdata = pred_df, type = 'response'))
+      } else { 
+        boot_models[[i]] = glm(formula = this_formula, data = sample_df, family = this_family)
+        pred_matrix[i,,j] = predict(boot_models[[i]], newdata = pred_df, type = 'response')
+      }
+    } # model loop
+    cat(paste0("END iteration: ", j, "\n"))
+  } # boot loop
+  
+  return(pred_matrix)
+  
+}
+
+
+center_gravity = function(coord_vec, zval = 1) {
+  
+  out = weighted.mean(x = coord_vec, w = zval)
+  return(out)
+
+}
+
