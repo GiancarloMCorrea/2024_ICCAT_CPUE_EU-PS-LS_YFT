@@ -7,22 +7,14 @@ library(dplyr)
 theme_set(theme_classic())
 source('aux_functions.R')
 
-data_folder = 'data'
-plot_folder = 'plots'
+data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT'
+plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/images'
 
 # -------------------------------------------------------------------------
 # Grid size already defined in data_preparation.R
 load(file.path(data_folder, 'joinDF.RData'))
-load(file.path(data_folder, 'limites.RData'))
-
-# -------------------------------------------------------------------------
-# Map information for plotting:
-xLim = c(limites$xlim1, limites$xlim2)
-yLim = c(limites$ylim1, limites$ylim2)
-worldmap = map_data("world")
-colnames(worldmap) = c("X", "Y", "PID", "POS", "region", "subregion")
-yBreaks = seq(from = yLim[1], to = yLim[2], by = 25)
-xBreaks = seq(from = xLim[1], to = xLim[2], by = 25)
+# Read plot parameters:
+source('plot_parameters.R')
 
 # -------------------------------------------------------------------------
 # Average catch per grid across years:

@@ -13,29 +13,22 @@ require(mgcv)
 require(sf)
 require(mgcViz)
 theme_set(theme_classic())
+source('aux_functions.R')
+
 
 # -------------------------------------------------------------------------
-data_folder = 'data'
-plot_folder = 'plots/gamst'
-params = list(species = "SKJ", ORP = "IOTC")
+
+data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT'
+plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/images/gamst'
+model_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/model_outputs'
 
 # -------------------------------------------------------------------------
 # Load some objects created before:
 load(file.path(data_folder, 'joinDF.RData'))
 load(file.path(data_folder, 'extraDF.RData'))
 load(file.path(data_folder, 'MyGrid.RData'))
-
-# -------------------------------------------------------------------------
-# Map information for plotting:
-limites = read.table(file.path(data_folder, "limites.csv"), header=TRUE,sep=",", na.strings="NA", dec=".", strip.white=TRUE)
-limites = subset(limites, ORP == params$ORP)
-xLim = c(limites$xlim1, limites$xlim2)
-yLim = c(limites$ylim1, limites$ylim2)
-worldmap = map_data("world")
-colnames(worldmap) = c("X", "Y", "PID", "POS", "region", "subregion")
-yBreaks = seq(from = -20, to = 20, by = 20)
-xBreaks = seq(from = 40, to = 100, by = 20)
-
+# Read plot parameters:
+source('plot_parameters.R')
 
 # -------------------------------------------------------------------------
 # Model 1 (using only positive observations): 

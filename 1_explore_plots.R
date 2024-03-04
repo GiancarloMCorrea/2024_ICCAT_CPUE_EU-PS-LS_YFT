@@ -9,8 +9,8 @@ library(purrr)
 source('aux_functions.R')
 theme_set(theme_classic())
 
-data_folder = 'data'
-plot_folder = 'plots'
+data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT'
+plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/images'
 
 # -------------------------------------------------------------------------
 # Read some data inputs created in data_preparation.R:
@@ -19,19 +19,12 @@ load(file.path(data_folder, 'extraDF.RData'))
 load(file.path(data_folder, 'main_df.RData'))
 load(file.path(data_folder, 'MyPoints.RData'))
 load(file.path(data_folder, 'MyGrid.RData'))
-load(file.path(data_folder, 'limites.RData'))
+# Read plot parameters:
+source('plot_parameters.R')
 
 # -------------------------------------------------------------------------
 # Some data to plot later:
 datos_sp = main_df
-
-# Map information for plotting:
-xLim = c(limites$xlim1, limites$xlim2)
-yLim = c(limites$ylim1, limites$ylim2)
-yBreaks = seq(from = yLim[1], to = yLim[2], by = 25)
-xBreaks = seq(from = xLim[1], to = xLim[2], by = 25)
-worldmap = map_data("world")
-colnames(worldmap) = c("X", "Y", "PID", "POS", "region", "subregion")
 
 # -------------------------------------------------------------------------
 # Histograms

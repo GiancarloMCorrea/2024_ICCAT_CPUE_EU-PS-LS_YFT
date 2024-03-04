@@ -13,94 +13,22 @@ require(sf)
 theme_set(theme_classic())
 source('aux_functions.R')
 
-data_folder = 'data'
-plot_folder = 'plots/glmm'
-model_folder = 'model_outputs'
+data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT'
+plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/images/glmm'
+model_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/model_outputs'
 
 # -------------------------------------------------------------------------
 # Load some objects created before:
 load(file.path(data_folder, 'joinDF.RData'))
 load(file.path(data_folder, 'catch_grid_df.RData'))
 load(file.path(data_folder, 'clust_area_df.RData'))
-load(file.path(data_folder, 'limites.RData'))
-
-# -------------------------------------------------------------------------
-# Map information for plotting:
-xLim = c(limites$xlim1, limites$xlim2)
-yLim = c(limites$ylim1, limites$ylim2)
-worldmap = map_data("world")
-colnames(worldmap) = c("X", "Y", "PID", "POS", "region", "subregion")
-yBreaks = seq(from = yLim[1], to = yLim[2], by = 25)
-xBreaks = seq(from = xLim[1], to = xLim[2], by = 25)
-
+# Read plot parameters:
+source('plot_parameters.R')
 
 # -------------------------------------------------------------------------
 # -------------------------------------------------------------------------
 # -------------------------------------------------------------------------
-# Model 1 (only positives approach): 
-# 
-# # Define dataset:
-# model_df = joinDF %>% filter(catch > 0)
-# # Create cluster column
-# n_cluster = nlevels(catch_grid_df$cluster)
-# model_df = left_join(model_df, catch_grid_df %>% dplyr::select(ID, cluster), by = 'ID')
-# 
-# # Run model:
-# glmm_mod_1 = glmer(log(catch) ~ year + quarter + den_water2 + h_sunrise + capacity + follow_echo + (1|year:quarter:cluster),
-#                    family = gaussian, data = model_df)
-# # Check residuals:
-# res_model = simulateResiduals(fittedModel = glmm_mod_1)
-# plot(res_model)
-# 
-# # Check effects:
-# jtools::effect_plot(glmm_mod_1, pred = den_water2, cat.geom = "line")
-# jtools::effect_plot(glmm_mod_1, pred = h_sunrise, cat.geom = "line")
-# jtools::effect_plot(glmm_mod_1, pred = capacity, cat.geom = "line")
-# jtools::effect_plot(glmm_mod_1, pred = follow_echo, cat.geom = "line")
-# plot_model(model = glmm_mod_1, type = 're')
-# 
-# # Predict CPUE (grid)
-# predData = expand.grid(year = as.factor(levels(model_df$year)), quarter = as.factor(levels(model_df$quarter)), cluster = as.factor(levels(model_df$cluster)),
-#                        h_sunrise = mean(model_df$h_sunrise), 
-#                        den_water2 = mean(model_df$den_water2), capacity = mean(model_df$capacity), follow_echo = as.factor('no follow'))
-# predData$cpue_pred = exp(predict(glmm_mod_1, newdata = predData, type = 'response', allow.new.levels = TRUE)) # , se.fit = T
-# PredGrid = left_join(clust_area_df, predData, by = c('cluster'))
-# PredGrid = PredGrid %>% mutate(yyqq = paste(year, quarter, sep = '-')) %>% na.omit
-# 
-# ggplot() +  
-#   geom_sf(data = PredGrid, aes(fill = cpue_pred, color = cpue_pred)) + 
-#   scale_fill_viridis() + scale_color_viridis() +
-#   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
-#   coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
-#   xlab(NULL) + ylab(NULL) +
-#   theme(legend.position = 'bottom') +
-#   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
-#   facet_wrap(~ yyqq, ncol = 8) +
-#   labs(fill = "Predicted mean CPUE") + guides(color = 'none')
-# ggsave(filename = file.path(plot_folder, 'grid_predictions_glmm_1.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
-# 
-# 
-# # Calculate index (weighted sum by area): or average?
-# PredTime = PredGrid %>% group_by(year, quarter) %>% summarise(weighted = weighted.mean(cpue_pred, cluster_area),
-#                                                               unweighted = mean(cpue_pred))
-# PredTime = PredTime %>% mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4,
-#                                model = 'glmm_1')
-# PredTime = tidyr::gather(PredTime, 'type_cpue', 'value', 3:4)
-# 
-# # Plot time predictions:
-# ggplot(data = PredTime, aes(x = time, y = value, color = factor(type_cpue))) +
-#   geom_line() +
-#   labs(color = 'CPUE type') +
-#   theme(legend.position = c(0.85, 0.15)) +
-#   ylab('Predicted CPUE (by quarter)') + xlab('Time')
-# ggsave(filename = file.path(plot_folder, 'time_predictions_glmm_1.jpg'), width = 190, height = 150, units = 'mm', dpi = 500)
-# 
-# 
-
-# -------------------------------------------------------------------------
-# -------------------------------------------------------------------------
-# -------------------------------------------------------------------------
-# Model 2 (hurdle approach): 
+# Model (hurdle approach): 
 
 # Define dataset:
 model_df = joinDF %>%  mutate(presence = catch > 0)

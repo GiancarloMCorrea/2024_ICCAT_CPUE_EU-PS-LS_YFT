@@ -1,4 +1,8 @@
 
+
+# -------------------------------------------------------------------------
+
+
 calculate_moran = function(lon, lat, zval, output_type = 'observed') {
 
   library(ape)
