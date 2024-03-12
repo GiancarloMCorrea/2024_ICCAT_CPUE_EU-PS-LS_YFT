@@ -50,7 +50,7 @@ calculate_area_on_land = function(dat) {
   cs = gUnaryUnion(wm, id=as.character(wm$continent))
   cs_sf = st_as_sf(cs)
   inter_grid = st_intersection(cs_sf, dat)
-  if(nrow(inter_grid) > 0) area_on_land = sum(as.numeric(st_area(inter_grid)))
+  if(nrow(inter_grid) > 0) area_on_land = sum(as.numeric(st_area(inter_grid)))*1e-06 # in km2
   else area_on_land = 0
   
   return(area_on_land)
