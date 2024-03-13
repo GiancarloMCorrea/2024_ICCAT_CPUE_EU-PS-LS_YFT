@@ -28,7 +28,6 @@ dir.create(model_folder, showWarnings = FALSE)
 # -------------------------------------------------------------------------
 # Load some objects created before:
 load(file.path(data_folder, 'joinDF.RData'))
-load(file.path(data_folder, 'extraDF.RData'))
 load(file.path(data_folder, 'MyGrid.RData'))
 # Read plot parameters:
 source('plot_parameters.R')
