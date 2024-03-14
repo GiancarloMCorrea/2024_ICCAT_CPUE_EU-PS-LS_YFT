@@ -13,9 +13,9 @@ require(sf)
 theme_set(theme_classic())
 source('aux_functions.R')
 
-data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-FS'
-plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/images/glmm'
-model_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/model_outputs/glmm'
+data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-LS'
+plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS-LS_YFT/images/glmm'
+model_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS-LS_YFT/model_outputs/glmm'
 # create folders in case missing:
 dir.create(plot_folder, showWarnings = FALSE)
 dir.create(model_folder, showWarnings = FALSE)
@@ -75,7 +75,7 @@ p1 = ggplot() +
   facet_wrap(~ year) +
   labs(fill = "Predicted mean CPUE") + guides(color = 'none')
 ggsave(filename = file.path(plot_folder, 'grid_predictions_glmm.jpg'), plot = p1, 
-       width = 190, height = 180, units = 'mm', dpi = 500)
+       width = 170, height = 170, units = 'mm', dpi = 500)
 
 # Calculate index (weighted sum by area)
 PredTime = PredGrid %>% group_by(year, quarter) %>% summarise(value = sum(cpue_pred*cluster_area*portion_on_ocean))

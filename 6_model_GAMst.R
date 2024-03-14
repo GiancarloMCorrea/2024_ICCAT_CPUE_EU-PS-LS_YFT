@@ -18,9 +18,9 @@ source('aux_functions.R')
 
 # -------------------------------------------------------------------------
 
-data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-FS'
-plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/images/gamst'
-model_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/model_outputs/gamst'
+data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-LS'
+plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS-LS_YFT/images/gamst'
+model_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS-LS_YFT/model_outputs/gamst'
 # create folders in case missing:
 dir.create(plot_folder, showWarnings = FALSE)
 dir.create(model_folder, showWarnings = FALSE)
@@ -40,7 +40,7 @@ model_df = joinDF %>%  mutate(presence = catch > 0)
 st_geometry(model_df) = NULL
 
 # Run model 1:
-gamst_mod_1 = bam(presence ~ year:quarter + s(lon, lat, bs = "re", by = year), data = model_df, family = binomial)
+gamst_mod_1 = bam(presence ~ year:quarter + s(lon, lat, by = quarter), data = model_df, family = binomial)
 summary(gamst_mod_1)
 save(gamst_mod_1, file = file.path(model_folder, 'my_model_1.RData'))
 
@@ -54,7 +54,7 @@ dev.off()
 # itsadug::pvisgam(gamst_mod_1, view=c("lon", "lat"), select=5)
 
 # Run model 2:
-gamst_mod_2 = bam(log(catch) ~ year:quarter + s(lon, lat, bs = "re", by = year), data = subset(model_df, catch > 0))
+gamst_mod_2 = bam(log(catch) ~ year:quarter + s(lon, lat, by = quarter), data = subset(model_df, catch > 0))
 summary(gamst_mod_2)
 save(gamst_mod_2, file = file.path(model_folder, 'my_model_2.RData'))
 
@@ -91,7 +91,7 @@ p1 = ggplot() +
   facet_wrap(~ year) +
   labs(fill = "Predicted mean CPUE") + guides(color = 'none')
 ggsave(filename = file.path(plot_folder, 'grid_predictions_gamst.jpg'), plot = p1, 
-       width = 190, height = 180, units = 'mm', dpi = 500)
+       width = 170, height = 170, units = 'mm', dpi = 500)
 
 # Calculate index (weighted sum by grid)
 PredTime = PredGrid %>% group_by(year, quarter) %>% summarise(value = sum(cpue_pred*grid_area*portion_on_ocean))

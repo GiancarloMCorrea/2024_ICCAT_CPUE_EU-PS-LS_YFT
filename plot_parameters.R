@@ -3,7 +3,6 @@
 
 # Plot parameters:
 # This will apply for all models.
-data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-FS'
 load(file.path(data_folder, 'limites.RData'))
 
 xLim = c(limites$xlim1, limites$xlim2)

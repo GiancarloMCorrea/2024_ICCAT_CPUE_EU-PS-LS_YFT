@@ -15,7 +15,7 @@ grid_size = 1 # in degrees
 # Folder where EU-PS data provided by IEO and IRD is stored:
 in_data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine'
 # Folder where processed data sets will be stored:
-out_data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-FS'
+out_data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-LS'
 
 # -------------------------------------------------------------------------
 
@@ -24,62 +24,65 @@ mydir = getwd()
 setwd(mydir)
 
 # Read data:
-main_df = read_delim(file = file.path(in_data_folder, "cae_ps_ecd_1991_2022.csv"), delim = ';', show_col_types = FALSE)
+all_data = readRDS(file = file.path(in_data_folder, "ecd_atlantic_fr_es_2010_2022_followed_density_vms_ts.RDS"))
+# Also explore metadata in `all_data`
+main_df = all_data$data
+st_geometry(main_df) = NULL # remove sf feature since will be added later
+main_df$vms_geom = NULL
 
 # Filter some variables:
 main_df = main_df %>% filter(c_opera %in% c(0,1)) # code of operation, should be 0 (null) or 1 (positive)
-main_df = main_df %>% filter(codeassocg == 2) # obj (1), free school (2), or ND (3)
-main_df = main_df %>% filter(year_d_act >= 1993) # from 1993 
-main_df = main_df %>% filter(v_nb_calees>0) # only observation with positive effort
+main_df = main_df %>% filter(code_assoc_groupe == 1) # obj (1), free school (2), or ND (3)
+main_df = main_df %>% filter(annee_de_peche >= 2010) # from 2010 
+main_df = main_df %>% filter(nombre_de_calees > 0) # only observation with positive effort
+main_df = main_df %>% filter(pays %in% c(1,4), ocean==1) # only SPA and FRA, and Atlantic Ocean
 
 # Remove duplicated rows:
 main_df$dup = duplicated(main_df) # remove duplicates 
 main_df = subset(main_df, dup==FALSE)
 
 # Explore variables:
-summary(main_df)
+glimpse(main_df)
 dim(main_df)
 
-# FIX TEMPORARILY LON LAT MIN (only few obs so probably does not matter):
-main_df = main_df %>% mutate(latmin = if_else(latmin < 60, true = latmin, false = 59),
-                             lonmin = if_else(lonmin < 60, true = lonmin, false = 59))
-
 # Create variables:
-main_df = main_df %>% mutate(yyqq = as.factor(paste(year_d_act, quarter, sep="-")),
-                             year = as.factor(year_d_act),
-                             quarter = as.factor(quarter),
-                             lat = latdeg + latmin/60,
-                             lon = londeg + lonmin/60)
+main_df = main_df %>% mutate(year = as.factor(annee_de_peche),
+                             quarter = as.factor(trimestre),
+                             time = annee_de_peche + (trimestre-1)/4,
+                             country = as.factor(pays),
+                             numbat = as.factor(numbat),
+                             hold_cap = turbobat_cap_m3,
+                             vessel_op = annee_de_peche-turbobat_an_serv, # number of years of vessel activity
+                             avg_density = scale(avg_density_1x1_month_water)[,1]) # to avoid convergence issues
+                             # lat = latdeg + latmin/60,
+                             # lon = londeg + lonmin/60)
 # Continuous values for lon and lat:
-main_df = main_df %>% mutate(lat = if_else(quadrant %in% c(2,3), true = lat*-1, false = lat),
-                             lon = if_else(quadrant %in% c(3,4), true = lon*-1, false = lon))
+# main_df = main_df %>% mutate(lat = if_else(quadrant %in% c(2,3), true = lat*-1, false = lat),
+#                              lon = if_else(quadrant %in% c(3,4), true = lon*-1, false = lon))
 
-# Filter relevant data:
-main_df = main_df %>% filter(flag %in% c(1,4), ocean==1, engine==1) 
-# main_df = main_df %>% filter(lon > -45, lat < 31) # remove observations in the Caribbean and off Portugal
-
-# Create the catch/set column
-main_df = main_df %>% mutate(catch = v_poids_capt_yft/v_nb_calees) # Make sure you select the right column
-
-# Calculate density
-# main_df = main_df %>% mutate(den = fr_avg_density_rf + es_avg_density_rf,
-#                              den_water = den/(water_area_1x1_km2*max(total_area_1x1_km2)),
-#                              follow = as.factor(follow))
-# main_df = main_df %>% filter(!is.na(den_water)) # should we remove these observations at this stage?
-
-# follow: follow==1| follow==0
-# main_df = dplyr::rename(main_df, h_sunrise = hrs_since_local_sunrise)
-# main_df = dplyr::rename(main_df, capacity = turbobat_cap_m3)
-# main_df$capacity = as.numeric(main_df$capacity)
+# Create the catch/set column:
+main_df = main_df %>% mutate(catch = capture_yft_corrigee/nombre_de_calees) # Make sure you select the right species column
 
 # Select relevant variables:
-myvars = c("year", "quarter", "lat", "lon", "catch", "vescode", "flag")
+myvars = c("year", "quarter", "time", "lon", "lat", "catch", "numbat", "country", 
+           "hold_cap", "vessel_op",
+           "followed", "fads_echo_capable",
+           "num_buoys_20nm", "num_owned_20nm", "num_owned_echo_20nm", "num_company_20nm", "num_company_echo_20nm",
+           "num_buoys_250km", "num_owned_250km", "num_owned_echo_250km", "num_company_250km", "num_company_echo_250km",
+           "avg_density")
+# Variables related to time since sunrise have too many NAs, so wont be used here
 main_df = main_df[myvars]
-# main_df = main_df %>% mutate(den_water2 = scale(den_water)[,1], # scale to avoid convergence problems
-#                              follow_echo = factor(ifelse(follow == '1', buoy_echo, 'no follow'),
-#                                                   levels = c("no follow","no echo","echo_1freq","echo_2freq"))) %>%
-#                 dplyr::select(-c(follow, buoy_echo)) # remove unused variables
-# save(main_df, file = file.path(out_data_folder, 'main_df.RData'))
+dim(main_df)
+main_df = main_df %>% na.omit # WARNING: make sure you do not remove too many observations.
+dim(main_df)
+
+# Now make follow variable:
+main_df$follow = NA
+main_df = main_df %>% mutate(follow = ifelse(!followed, yes = 0, follow))
+main_df = main_df %>% mutate(follow = ifelse(followed & !fads_echo_capable, yes = 1, follow))
+main_df = main_df %>% mutate(follow = ifelse(followed & fads_echo_capable, yes = 2, follow))
+main_df$follow = factor(main_df$follow)
+main_df = main_df %>% dplyr::select(-c(followed, fads_echo_capable)) # remove unused variables
 
 # -------------------------------------------------------------------------
 # Spatial data frames:
@@ -97,7 +100,7 @@ joinDF = st_join(MyGrid, left = TRUE, MyPoints) %>% na.omit
 # Identify grid (and points inside) with some criteria: 
 my_tab = xtabs(~ ID + year, data = joinDF) # find frequency of sets per grid and year
 my_freq = apply(my_tab, 1, function(x) sum(x > 0)) # find recurrent grids over the years
-include_grid = names(my_freq)[which(as.vector(my_freq) >= 5)] # grids to be excluded because infrequent sample (less than 5 years)
+include_grid = names(my_freq)[which(as.vector(my_freq) >= 3)] # grids to be excluded because infrequent sample (less than 3 years)
 include_grid = as.numeric(include_grid)
 
 # Remove grids:
@@ -117,6 +120,7 @@ MyGrid = MyGrid %>% mutate(portion_on_ocean = 1 - (area_on_land/grid_area))
 save(MyGrid, file = file.path(out_data_folder, 'MyGrid.RData'))
 
 # Limits for plotting later:
-limites = data.frame(xlim1 = floor(min(extraDF$lon)/5)*5, ylim1 = floor(min(extraDF$lat)/5)*5,
-                     xlim2 = ceiling(max(extraDF$lon)/5)*5, ylim2 = ceiling(max(extraDF$lat)/5)*5)
+MyGrid2 = st_centroid(MyGrid) %>% dplyr::mutate(lon = sf::st_coordinates(.)[,1], lat = sf::st_coordinates(.)[,2])
+limites = data.frame(xlim1 = floor(min(MyGrid2$lon)/5)*5, ylim1 = floor(min(MyGrid2$lat)/5)*5,
+                     xlim2 = ceiling(max(MyGrid2$lon)/5)*5, ylim2 = ceiling(max(MyGrid2$lat)/5)*5)
 save(limites, file = file.path(out_data_folder, 'limites.RData'))

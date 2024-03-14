@@ -10,9 +10,9 @@ source('aux_functions.R')
 
 
 # -------------------------------------------------------------------------
-data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-FS'
-plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/images/sdmTMB'
-model_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/model_outputs/sdmTMB'
+data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-LS'
+plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS-LS_YFT/images/sdmTMB'
+model_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS-LS_YFT/model_outputs/sdmTMB'
 # create folders in case missing:
 dir.create(plot_folder, showWarnings = FALSE)
 dir.create(model_folder, showWarnings = FALSE)
@@ -29,14 +29,14 @@ source('plot_parameters.R')
 model_df = joinDF %>% 
               mutate(yyyyqq = paste(year, quarter, sep = '-'),
                      time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4)
-model_df = model_df %>% filter(time < 2002) 
+# model_df = model_df %>% filter(time < 2015) 
 
 # Make some changes before running model:
 st_geometry(model_df) = NULL
 model_df = sdmTMB::add_utm_columns(dat = model_df, ll_names = c('lon', 'lat'))
 
 # Make mesh:
-mesh = make_mesh(model_df, c("X", "Y"), cutoff = 50)
+mesh = make_mesh(model_df, c("X", "Y"), cutoff = 60)
 jpeg(filename = file.path(plot_folder, 'mesh.jpg'), width = 95, height = 100, units = 'mm', res = 500)
 par(mar = c(1, 1, 1, 1))
 plot(mesh)

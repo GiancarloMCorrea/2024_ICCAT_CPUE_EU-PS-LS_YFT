@@ -9,8 +9,8 @@ library(purrr)
 source('aux_functions.R')
 theme_set(theme_classic())
 
-data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-FS'
-plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS_YFT/images'
+data_folder = 'C:/Use/OneDrive - AZTI/Data/ICCAT/2024/EU_Purse-seine/YFT-LS'
+plot_folder = 'C:/Use/OneDrive - AZTI/My_working_papers/ICCAT/2024/CPUE_EU-PS-LS_YFT/images'
 
 # -------------------------------------------------------------------------
 # Read some data inputs created in data_preparation.R:
@@ -30,7 +30,7 @@ p2 = ggplot(data = joinDF %>% filter(catch > 0), aes(x = log(catch))) +
   ylab("Density") + xlab("log(catch) (only positive sets)")
 hist_plot = grid.arrange(p1, p2, nrow = 1)
 ggsave(filename = file.path(plot_folder, 'hist_catch.jpg'), plot = hist_plot, 
-       width = 190, height = 70, units = 'mm', dpi = 500)
+       width = 170, height = 70, units = 'mm', dpi = 500)
 
 # -------------------------------------------------------------------------
 # Calculate spatial indices:
@@ -52,7 +52,7 @@ ggplot(data = plot_df, aes(time, value)) +
   geom_line() +
   ylab('Value') + xlab('Time') +
   facet_wrap(~ variable, scales = 'free_y', ncol = 3)
-ggsave(filename = file.path(plot_folder, 'spat_ind.jpg'), width = 190, height = 140, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'spat_ind.jpg'), width = 170, height = 120, units = 'mm', dpi = 500)
 
 
 # -------------------------------------------------------------------------
@@ -77,15 +77,17 @@ plot_df = plot_df %>% mutate(time = as.numeric(as.character(year)))
 p3 = ggplot(plot_df, aes(time, n_obs)) +
   geom_point() +
   geom_line() +
+  scale_x_continuous(breaks = pretty(plot_df$time)) +
   ylab('Number of sets') + xlab('Time') 
 p4 = ggplot(plot_df, aes(time, prop_zero)) +
   geom_point() +
   geom_line() +
+  scale_x_continuous(breaks = pretty(plot_df$time)) +
   ylab('Proportion of null sets') + xlab('Time') 
 
 merged_plot = grid.arrange(p1, p2, p3, p4)
 ggsave(filename = file.path(plot_folder, 'time_catch.jpg'), plot = merged_plot,
-       width = 190, height = 160, units = 'mm', dpi = 500)
+       width = 170, height = 120, units = 'mm', dpi = 500)
 
 # All grids and points --------------------------------------------------------
 
@@ -143,8 +145,8 @@ p1 = ggplot() +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.8, 0.08), legend.direction="horizontal") +
   labs(fill = "Effort") + guides(color = 'none') +
-  facet_wrap(~ factor(year), ncol = 7)
-ggsave(filename = file.path(plot_folder, 'grid_eff_time.jpg'), plot = p1, width = 190, height = 170, units = 'mm', dpi = 500)
+  facet_wrap(~ factor(year))
+ggsave(filename = file.path(plot_folder, 'grid_eff_time.jpg'), plot = p1, width = 170, height = 170, units = 'mm', dpi = 500)
 
 
 # Avg catch per grid (aggregated) -----------------------------------------
@@ -179,8 +181,8 @@ p1 = ggplot() +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.8, 0.08), legend.direction="horizontal") +
   labs(fill = "Avg catch (t)") + guides(color = 'none') +
-  facet_wrap(~ factor(year), ncol = 7)
-ggsave(filename = file.path(plot_folder, 'grid_catch_time.jpg'), plot = p1, width = 190, height = 170, units = 'mm', dpi = 500)
+  facet_wrap(~ factor(year))
+ggsave(filename = file.path(plot_folder, 'grid_catch_time.jpg'), plot = p1, width = 170, height = 170, units = 'mm', dpi = 500)
 
 # Prop of zeros (aggregated) -----------------------------------------
 
@@ -214,8 +216,8 @@ p1 = ggplot() +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.8, 0.08), legend.direction="horizontal") +
   labs(fill = "Prop of zeros") + guides(color = 'none') +
-  facet_wrap(~ factor(year), ncol = 7)
-ggsave(filename = file.path(plot_folder, 'grid_zeroprop_time.jpg'), plot = p1, width = 190, height = 170, units = 'mm', dpi = 500)
+  facet_wrap(~ factor(year))
+ggsave(filename = file.path(plot_folder, 'grid_zeroprop_time.jpg'), plot = p1, width = 170, height = 170, units = 'mm', dpi = 500)
 
 
 # -------------------------------------------------------------------------
@@ -228,7 +230,7 @@ ggplot(data = plot_df, aes(x = quarter, y = n_obs)) +
   scale_fill_brewer(palette = 'Set2') +
   theme(legend.position = 'none') +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'eff_quarter.jpg'), width = 190, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'eff_quarter.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
 
 # -------------------------------------------------------------------------
@@ -240,7 +242,7 @@ ggplot(data = subset(joinDF, catch > 0), aes(x = quarter, y = log(catch))) +
   scale_fill_brewer(palette = 'Set2') +
   theme(legend.position = 'none') +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_quarter.jpg'), width = 190, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'catch_quarter.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
 
 # -------------------------------------------------------------------------
@@ -253,76 +255,78 @@ ggplot(data = plot_df, aes(x = quarter, y = prop_zero)) +
   scale_fill_brewer(palette = 'Set2') +
   theme(legend.position = 'none') +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'propzero_quarter.jpg'), width = 190, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'propzero_quarter.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
 
 # -------------------------------------------------------------------------
-# Evaluate relationship between variables vs log(catch) per yyqq:
+# Evaluate relationship between variables vs log(catch):
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = lon, y = log(catch))) +
   geom_point() +
   xlab('longitude') + ylab('log(catch) (only positive sets)') +
   geom_smooth(method = loess, se = FALSE) +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_lon.jpg'), width = 190, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'catch_lon.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = lat, y = log(catch))) +
   geom_point() +
   xlab('latitude') + ylab('log(catch) (only positive sets)') +
   geom_smooth(method = loess, se = FALSE) +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_lat.jpg'), width = 190, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = file.path(plot_folder, 'catch_lat.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
-# ggplot(data = plot_df, aes(x = h_sunrise, y = log(catch + 1))) +
-#   geom_point() +
-#   geom_smooth(method = loess, se = FALSE) +
-#   facet_wrap(~ yyqq)
-# ggsave(filename = file.path(plot_folder, 'catch_hsunr.jpg'), width = 190, height = 200, units = 'mm', dpi = 500)
-# 
-# ggplot(data = plot_df, aes(x = den_water, y = log(catch + 1))) +
-#   geom_point() +
-#   geom_smooth(method = loess, se = FALSE) +
-#   facet_wrap(~ yyqq)
-# ggsave(filename = file.path(plot_folder, 'catch_denwater.jpg'), width = 190, height = 200, units = 'mm', dpi = 500)
-# 
-# ggplot(data = plot_df, aes(x = capacity, y = log(catch + 1))) +
-#   geom_point() +
-#   geom_smooth(method = loess, se = FALSE) +
-#   facet_wrap(~ yyqq)
-# ggsave(filename = file.path(plot_folder, 'catch_capacity.jpg'), width = 190, height = 200, units = 'mm', dpi = 500)
+ggplot(data = subset(joinDF, catch > 0), aes(x = avg_density, y = log(catch))) +
+  geom_point() +
+  xlab('avg_density') + ylab('log(catch) (only positive sets)') +
+  geom_smooth(method = loess, se = FALSE) +
+  facet_wrap(~ year)
+ggsave(filename = file.path(plot_folder, 'catch_avg_density.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
+ggplot(data = subset(joinDF, catch > 0), aes(x = hold_cap, y = log(catch))) +
+  geom_point() +
+  xlab('vessel_cap') + ylab('log(catch) (only positive sets)') +
+  geom_smooth(method = loess, se = FALSE) +
+  facet_wrap(~ year)
+ggsave(filename = file.path(plot_folder, 'catch_hold_cap.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
-# plot_df = main_df %>% mutate(yyqq = paste(year, quarter, sep = '-')) %>% filter(!is.na(yyqq) & !is.na(follow_echo))
-# 
-# ggplot(data = plot_df, aes(x = follow_echo, y = log(catch + 1))) +
-#   geom_boxplot(aes(fill = follow_echo)) +
-#   scale_fill_brewer(palette = 'Set2') +
-#   theme(legend.position = 'none') +
-#   xlab(NULL) +
-#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 8)) +
-#   facet_wrap(~ yyqq)
-# ggsave(filename = file.path(plot_folder, 'catch_follow.jpg'), width = 190, height = 200, units = 'mm', dpi = 500)
+ggplot(data = subset(joinDF, catch > 0), aes(x = vessel_op, y = log(catch))) +
+  geom_point() +
+  xlab('vessel_op') + ylab('log(catch) (only positive sets)') +
+  geom_smooth(method = loess, se = FALSE) +
+  facet_wrap(~ year)
+ggsave(filename = file.path(plot_folder, 'catch_vessel_op.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
+ggplot(data = subset(joinDF, catch > 0), aes(x = num_buoys_20nm, y = log(catch))) +
+  geom_point() +
+  xlab('num_buoys20nm') + ylab('log(catch) (only positive sets)') +
+  geom_smooth(method = loess, se = FALSE) +
+  facet_wrap(~ year)
+ggsave(filename = file.path(plot_folder, 'catch_num_buoys20nm.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
-# -------------------------------------------------------------------------
-# Evaluate relationship between time vs log(catch) per grid:
+ggplot(data = subset(joinDF, catch > 0), aes(x = num_buoys_250km, y = log(catch))) +
+  geom_point() +
+  xlab('num_buoys250km') + ylab('log(catch) (only positive sets)') +
+  geom_smooth(method = loess, se = FALSE) +
+  facet_wrap(~ year)
+ggsave(filename = file.path(plot_folder, 'catch_num_buoys250km.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
-# plot_df = joinDF %>% mutate(yyqq = paste(year, quarter, sep = '-')) %>% 
-#   filter(!is.na(yyqq)) %>%
-#   mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4)
-# 
-# ggplot(data = plot_df, aes(x = time, y = log(catch + 1))) +
-#   geom_point() +
-#   geom_smooth(method = loess, se = FALSE) +
-#   xlab('Time') +
-#   facet_wrap(~ factor(ID))
-# ggsave(filename = file.path(plot_folder, 'catch_time_grid.jpg'), width = 190, height = 200, units = 'mm', dpi = 500)
+ggplot(data = subset(joinDF, catch > 0), aes(x = country, y = log(catch))) +
+  geom_boxplot() +
+  xlab('country') + ylab('log(catch) (only positive sets)') +
+  facet_wrap(~ year)
+ggsave(filename = file.path(plot_folder, 'catch_country.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+
+ggplot(data = subset(joinDF, catch > 0), aes(x = follow, y = log(catch))) +
+  geom_boxplot() +
+  xlab('followed') + ylab('log(catch) (only positive sets)') +
+  facet_wrap(~ year)
+ggsave(filename = file.path(plot_folder, 'catch_followed.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
 
 
 # -------------------------------------------------------------------------
 # Evaluate relationship between time vs log(catch) per grid in a map:
 
-plot_df = joinDF %>% mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4)
+plot_df = joinDF
 n_all_quarters = length(unique(plot_df$time))
 
 mods = plot_df %>% split(f = plot_df$ID) %>% 
