@@ -11,4 +11,6 @@ worldmap = map_data("world")
 colnames(worldmap) = c("X", "Y", "PID", "POS", "region", "subregion")
 yBreaks = seq(from = yLim[1], to = yLim[2], by = 20)
 xBreaks = seq(from = xLim[1], to = xLim[2], by = 20)
+img_type = '.png'
+img_res = 300 # dpi
 

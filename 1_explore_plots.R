@@ -29,8 +29,8 @@ p2 = ggplot(data = joinDF %>% filter(catch > 0), aes(x = log(catch))) +
   geom_histogram(aes(y=after_stat(density)), position="identity", alpha=0.5)+
   ylab("Density") + xlab("log(catch) (only positive sets)")
 hist_plot = grid.arrange(p1, p2, nrow = 1)
-ggsave(filename = file.path(plot_folder, 'hist_catch.jpg'), plot = hist_plot, 
-       width = 170, height = 70, units = 'mm', dpi = 500)
+ggsave(filename = paste0('hist_catch', img_type), path = plot_folder, plot = hist_plot, 
+       width = 170, height = 70, units = 'mm', dpi = img_res)
 
 # -------------------------------------------------------------------------
 # Calculate spatial indices:
@@ -52,7 +52,8 @@ ggplot(data = plot_df, aes(time, value)) +
   geom_line() +
   ylab('Value') + xlab('Time') +
   facet_wrap(~ variable, scales = 'free_y', ncol = 3)
-ggsave(filename = file.path(plot_folder, 'spat_ind.jpg'), width = 170, height = 120, units = 'mm', dpi = 500)
+ggsave(filename = paste0('spat_ind', img_type), path = plot_folder, 
+       width = 170, height = 120, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
@@ -86,8 +87,8 @@ p4 = ggplot(plot_df, aes(time, prop_zero)) +
   ylab('Proportion of null sets') + xlab('Time') 
 
 merged_plot = grid.arrange(p1, p2, p3, p4)
-ggsave(filename = file.path(plot_folder, 'time_catch.jpg'), plot = merged_plot,
-       width = 170, height = 120, units = 'mm', dpi = 500)
+ggsave(filename = paste0('time_catch', img_type), path = plot_folder,  plot = merged_plot,
+       width = 170, height = 120, units = 'mm', dpi = img_res)
 
 # All grids and points --------------------------------------------------------
 
@@ -95,23 +96,25 @@ MyPoints = joinDF
 st_geometry(MyPoints) = NULL
 MyPoints = MyPoints %>% st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = MyPoints, color = 'black', alpha = 0.5) + 
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
   coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) 
-ggsave(filename = file.path(plot_folder, 'all_sets.jpg'), width = 170, height = 160, units = 'mm', dpi = 500)
+ggsave(filename = paste0('all_sets', img_type), path = plot_folder, plot = p1,
+       width = 170, height = 160, units = 'mm', dpi = img_res)
 
 # Grids extrapolation --------------------------------------------------------
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = MyGrid, fill = 'white') + 
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
   coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
   xlab(NULL) + ylab(NULL) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) 
-ggsave(filename = file.path(plot_folder, 'grid_extrapo.jpg'), width = 170, height = 160, units = 'mm', dpi = 500)
+ggsave(filename = paste0('grid_extrapo', img_type), path = plot_folder, plot = p1,
+       width = 170, height = 160, units = 'mm', dpi = img_res)
 
 
 # Effort per grid (aggregated) -----------------------------------------
@@ -128,7 +131,8 @@ p1 = ggplot() +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.9, 0.8)) +
   labs(fill = "Effort") + guides(color = 'none') 
-ggsave(filename = file.path(plot_folder, 'grid_eff.jpg'), plot = p1, width = 170, height = 160, units = 'mm', dpi = 500)
+ggsave(filename = paste0('grid_eff', img_type), path = plot_folder, plot = p1, 
+       width = 170, height = 160, units = 'mm', dpi = img_res)
 
 # Effort per grid (per year) -----------------------------------------
 
@@ -146,7 +150,8 @@ p1 = ggplot() +
   theme(legend.position = c(0.8, 0.08), legend.direction="horizontal") +
   labs(fill = "Effort") + guides(color = 'none') +
   facet_wrap(~ factor(year))
-ggsave(filename = file.path(plot_folder, 'grid_eff_time.jpg'), plot = p1, width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('grid_eff_time', img_type), path = plot_folder, plot = p1, 
+       width = 170, height = 170, units = 'mm', dpi = img_res)
 
 
 # Avg catch per grid (aggregated) -----------------------------------------
@@ -163,7 +168,8 @@ p1 = ggplot() +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.9, 0.8)) +
   labs(fill = "Avg catch (t)") + guides(color = 'none')
-ggsave(filename = file.path(plot_folder, 'grid_catch.jpg'), plot = p1, width = 170, height = 160, units = 'mm', dpi = 500)
+ggsave(filename = paste0('grid_catch', img_type), path = plot_folder, plot = p1, 
+       width = 170, height = 160, units = 'mm', dpi = img_res)
 
 
 # Avg catch per grid (per year) -------------------------------------------
@@ -182,7 +188,8 @@ p1 = ggplot() +
   theme(legend.position = c(0.8, 0.08), legend.direction="horizontal") +
   labs(fill = "Avg catch (t)") + guides(color = 'none') +
   facet_wrap(~ factor(year))
-ggsave(filename = file.path(plot_folder, 'grid_catch_time.jpg'), plot = p1, width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('grid_catch_time', img_type), path = plot_folder, plot = p1, 
+       width = 170, height = 170, units = 'mm', dpi = img_res)
 
 # Prop of zeros (aggregated) -----------------------------------------
 
@@ -198,7 +205,8 @@ p1 = ggplot() +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.9, 0.8)) +
   labs(fill = "Prop of zeros") + guides(color = 'none')
-ggsave(filename = file.path(plot_folder, 'grid_zeroprop.jpg'), plot = p1, width = 170, height = 160, units = 'mm', dpi = 500)
+ggsave(filename = paste0('grid_zeroprop', img_type), path = plot_folder, plot = p1, 
+       width = 170, height = 160, units = 'mm', dpi = img_res)
  
 
 # Prop zero per grid (per year) -------------------------------------------
@@ -217,45 +225,49 @@ p1 = ggplot() +
   theme(legend.position = c(0.8, 0.08), legend.direction="horizontal") +
   labs(fill = "Prop of zeros") + guides(color = 'none') +
   facet_wrap(~ factor(year))
-ggsave(filename = file.path(plot_folder, 'grid_zeroprop_time.jpg'), plot = p1, width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('grid_zeroprop_time', img_type), path = plot_folder, plot = p1, 
+       width = 170, height = 170, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
 # Evaluate relationship between quarter vs effort:
 plot_df = joinDF %>% group_by(year, quarter) %>% dplyr::summarise(n_obs=n())
 
-ggplot(data = plot_df, aes(x = quarter, y = n_obs)) +
+p1 = ggplot(data = plot_df, aes(x = quarter, y = n_obs)) +
   geom_col(aes(fill = quarter)) +
   xlab('Quarter') + ylab('Effort') +
   scale_fill_brewer(palette = 'Set2') +
   theme(legend.position = 'none') +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'eff_quarter.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('eff_quarter', img_type), path = plot_folder, plot = p1,
+       width = 170, height = 170, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
 # Evaluate relationship between quarter vs log(catch):
 
-ggplot(data = subset(joinDF, catch > 0), aes(x = quarter, y = log(catch))) +
+p1 = ggplot(data = subset(joinDF, catch > 0), aes(x = quarter, y = log(catch))) +
   geom_boxplot(aes(fill = quarter), outlier.size = 0.5) +
   xlab('Quarter') + ylab('log(catch) (only positive sets)') +
   scale_fill_brewer(palette = 'Set2') +
   theme(legend.position = 'none') +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_quarter.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('catch_quarter', img_type), path = plot_folder, plot = p1,
+       width = 170, height = 170, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
 # Evaluate relationship between quarter vs propZero:
 plot_df = joinDF %>% group_by(year, quarter) %>% dplyr::summarise(prop_zero=length(which(catch == 0))/n()) 
 
-ggplot(data = plot_df, aes(x = quarter, y = prop_zero)) +
+p1 = ggplot(data = plot_df, aes(x = quarter, y = prop_zero)) +
   geom_col(aes(fill = quarter)) +
   xlab('Quarter') + ylab('Proportion of null sets') +
   scale_fill_brewer(palette = 'Set2') +
   theme(legend.position = 'none') +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'propzero_quarter.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('propzero_quarter', img_type), path = plot_folder, plot = p1,
+       width = 170, height = 170, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
@@ -266,61 +278,61 @@ ggplot(data = subset(joinDF, catch > 0), aes(x = lon, y = log(catch))) +
   xlab('longitude') + ylab('log(catch) (only positive sets)') +
   geom_smooth(method = loess, se = FALSE) +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_lon.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('catch_lon', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = lat, y = log(catch))) +
   geom_point() +
   xlab('latitude') + ylab('log(catch) (only positive sets)') +
   geom_smooth(method = loess, se = FALSE) +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_lat.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('catch_lat', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = avg_density, y = log(catch))) +
   geom_point() +
   xlab('avg_density') + ylab('log(catch) (only positive sets)') +
   geom_smooth(method = loess, se = FALSE) +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_avg_density.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('catch_avg_density', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = hold_cap, y = log(catch))) +
   geom_point() +
   xlab('vessel_cap') + ylab('log(catch) (only positive sets)') +
   geom_smooth(method = loess, se = FALSE) +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_hold_cap.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('catch_hold_cap', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = vessel_op, y = log(catch))) +
   geom_point() +
   xlab('vessel_op') + ylab('log(catch) (only positive sets)') +
   geom_smooth(method = loess, se = FALSE) +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_vessel_op.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('catch_vessel_op', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = num_buoys_20nm, y = log(catch))) +
   geom_point() +
   xlab('num_buoys20nm') + ylab('log(catch) (only positive sets)') +
   geom_smooth(method = loess, se = FALSE) +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_num_buoys20nm.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('catch_num_buoys20nm', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = num_buoys_250km, y = log(catch))) +
   geom_point() +
   xlab('num_buoys250km') + ylab('log(catch) (only positive sets)') +
   geom_smooth(method = loess, se = FALSE) +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_num_buoys250km.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('catch_num_buoys250km', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = country, y = log(catch))) +
   geom_boxplot() +
   xlab('country') + ylab('log(catch) (only positive sets)') +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_country.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('catch_country', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = follow, y = log(catch))) +
   geom_boxplot() +
   xlab('followed') + ylab('log(catch) (only positive sets)') +
   facet_wrap(~ year)
-ggsave(filename = file.path(plot_folder, 'catch_followed.jpg'), width = 170, height = 170, units = 'mm', dpi = 500)
+ggsave(filename = paste0('catch_followed', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
 
 
 # -------------------------------------------------------------------------
@@ -336,7 +348,7 @@ new_data = data.frame(ID = as.numeric(names(mods)), slope = as.vector(unlist(mod
 MyGrid2 = left_join(MyGrid, new_data, by = 'ID')
 MyGrid2 = MyGrid2 %>% mutate(type_slope = if_else(slope < 0, true = -1, false = 1)) %>% na.omit
 
-ggplot() +  
+p1 = ggplot() +  
   geom_sf(data = MyGrid2, aes(fill = factor(type_slope), alpha = abs(slope)), color = 'transparent') + 
   geom_polygon(data = worldmap, aes(X, Y, group=PID), fill = "gray60", color=NA) +
   coord_sf(expand = FALSE, xlim = xLim, ylim = yLim) +
@@ -345,4 +357,5 @@ ggplot() +
   guides(fill="none", color = 'none', alpha=guide_legend(title = 'log(catch) trend')) +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   scale_fill_brewer(palette = 'Set1', direction = -1)
-ggsave(filename = file.path(plot_folder, 'grid_trend.jpg'), width = 170, height = 160, units = 'mm', dpi = 500)
+ggsave(filename = paste0('grid_trend', img_type), path = plot_folder,  plot = p1, 
+       width = 170, height = 160, units = 'mm', dpi = img_res)

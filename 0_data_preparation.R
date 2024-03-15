@@ -49,7 +49,7 @@ dim(main_df)
 main_df = main_df %>% mutate(year = as.factor(annee_de_peche),
                              quarter = as.factor(trimestre),
                              time = annee_de_peche + (trimestre-1)/4,
-                             country = as.factor(pays),
+                             country = factor(pays, levels = c(1, 4), labels = c('France', 'Spain')),
                              numbat = as.factor(numbat),
                              hold_cap = turbobat_cap_m3,
                              vessel_op = annee_de_peche-turbobat_an_serv, # number of years of vessel activity
@@ -81,7 +81,7 @@ main_df$follow = NA
 main_df = main_df %>% mutate(follow = ifelse(!followed, yes = 0, follow))
 main_df = main_df %>% mutate(follow = ifelse(followed & !fads_echo_capable, yes = 1, follow))
 main_df = main_df %>% mutate(follow = ifelse(followed & fads_echo_capable, yes = 2, follow))
-main_df$follow = factor(main_df$follow)
+main_df$follow = factor(main_df$follow, levels = c(0,1,2), labels = c('No', 'Yes_No-echo', 'Yes_Echo'))
 main_df = main_df %>% dplyr::select(-c(followed, fads_echo_capable)) # remove unused variables
 
 # -------------------------------------------------------------------------
