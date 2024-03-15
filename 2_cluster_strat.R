@@ -49,7 +49,8 @@ p1 = ggplot() +
   scale_x_continuous(breaks = xBreaks) + scale_y_continuous(breaks = yBreaks) +
   theme(legend.position = c(0.9, 0.8)) +
   labs(fill = "Cluster") + guides(color = 'none') 
-ggsave(filename = file.path(plot_folder, 'grid_cluster.jpg'), plot = p1, width = 170, height = 160, units = 'mm', dpi = 500)
+ggsave(filename = paste0('grid_cluster', img_type), path = plot_folder,  plot = p1, 
+       width = 170, height = 160, units = 'mm', dpi = img_res)
 
 # Update joinDF with cluster column:
 st_geometry(catch_grid_df) = NULL
