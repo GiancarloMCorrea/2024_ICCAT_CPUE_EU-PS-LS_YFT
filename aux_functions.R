@@ -125,3 +125,56 @@ center_gravity = function(coord_vec, zval = 1) {
 
 }
 
+# Function that will compute a prediction interval for an arbitrary GAM
+# Author: David Kaplan
+pi_sims_gam = function(model,newdata,n=1e4,alpha=0.05,
+                       probs=c(alpha/2,1-alpha/2),return.sims=FALSE) {
+  family = sub("[(].*[)]$","",model$family$family)
+  invlink = model$family$linkinv
+  
+  # Model family must be known to this function so as to be able
+  # to identify how to draw values 
+  # from the distribution family, simulated means and other parameters contained
+  # in the model (e.g., the scale parameter). 
+  
+  # Get simulated coefficients
+  beta <- coef(model) # coefficients
+  V <- vcov(model) # covariance of coefficients
+  Cv <- Matrix::chol(V) # Cholevsky factorisation of covariance
+  nus <- rnorm(n * length(beta)) # Unit normally distributed values
+  beta_sims <- beta + t(Cv) %*% matrix(nus, nrow = length(beta), ncol = n) # Simulated coefficients
+  
+  # Get predictions in linear space
+  lpmat <- predict(model, newdata = newdata, type = "lpmatrix")
+  linpred_sims <- lpmat %*% beta_sims
+  
+  # Simulated responses after applying inverse link function
+  val_sims <- invlink(linpred_sims)
+  
+  # Simulated predictions drawn from distribution
+  y_sims = switch(family,
+                  binomial=rbinom(n = prod(dim(val_sims)), size = 1,
+                                  prob = val_sims),
+                  gaussian=rnorm(n = prod(dim(val_sims)), mean = val_sims, 
+                                 sd = sqrt(summary(model)$scale)),
+                  poisson=rpois(n = prod(dim(val_sims)), lambda = val_sims),
+                  "Negative Binomial"=,
+                  nb=rnbinom(n = prod(dim(val_sims)), mu = val_sims,
+                             size=model$family$getTheta(TRUE)),
+                  "Tweedie"=,
+                  tw=mgcv::rTweedie(mu = val_sims,
+                                    p = model$family$getTheta(TRUE),
+                                    phi = summary(model)$scale),
+                  stop("Uknown model family: ",family)) |> 
+    matrix(ncol=ncol(val_sims),nrow=nrow(val_sims))
+  
+  qq = apply(y_sims,1,quantile,probs=probs) |> t() |> as.data.frame()
+  
+  if (return.sims) {
+    res = list(quantiles=qq,sims=y_sims)
+  } else {
+    res = qq
+  }
+  
+  return(res)
+}
