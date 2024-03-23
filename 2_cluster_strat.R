@@ -18,7 +18,7 @@ source('plot_parameters.R')
 
 # -------------------------------------------------------------------------
 # Average catch per grid across years:
-catch_grid_df = joinDF %>% group_by(ID) %>% dplyr::summarise(avg_catch = mean(catch)) # WARNING: logscale
+catch_grid_df = joinDF %>% group_by(ID) %>% dplyr::summarise(avg_catch = mean(catch))
 tmp_grid = st_centroid(catch_grid_df) %>% dplyr::mutate(lon = sf::st_coordinates(.)[,1], lat = sf::st_coordinates(.)[,2])
 sel_var_mat = tmp_grid %>% dplyr::select(avg_catch, lon, lat) %>% st_drop_geometry
 sel_var_mat = scale(sel_var_mat) # standardize

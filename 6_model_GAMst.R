@@ -84,8 +84,8 @@ my_predictions_1 = predict(gamst_mod_1, newdata = predData, type = 'response', s
 # Predictions for lognormal part:
 my_predictions_2 = predict(gamst_mod_2, newdata = predData, type = 'response', se.fit = TRUE, allow.new.levels = TRUE)
 disp_par = summary(gamst_mod_2)$dispersion # for correction lognormal
-# mean_approx_2 = exp(my_predictions_2$fit + disp_par*0.5) # do correction?
-mean_approx_2 = exp(my_predictions_2$fit)
+mean_approx_2 = exp(my_predictions_2$fit + disp_par*0.5) # do correction?
+# mean_approx_2 = exp(my_predictions_2$fit)
 # response = link prediction because gaussian
 se_approx_2 = exp(my_predictions_2$fit)*my_predictions_2$se.fit
 # Using delta method:

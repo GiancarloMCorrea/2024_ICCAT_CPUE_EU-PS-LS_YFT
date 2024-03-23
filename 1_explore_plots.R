@@ -315,12 +315,14 @@ ggplot(data = subset(joinDF, catch > 0), aes(x = num_buoys_20nm, y = log(catch))
   facet_wrap(~ year)
 ggsave(filename = paste0('catch_num_buoys20nm', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
 
+
 ggplot(data = subset(joinDF, catch > 0), aes(x = num_buoys_250km, y = log(catch))) +
   geom_point() +
   xlab('num_buoys250km') + ylab('log(catch) (only positive sets)') +
   geom_smooth(method = loess, se = FALSE) +
   facet_wrap(~ year)
 ggsave(filename = paste0('catch_num_buoys250km', img_type), path = plot_folder, width = 170, height = 170, units = 'mm', dpi = img_res)
+
 
 ggplot(data = subset(joinDF, catch > 0), aes(x = country, y = log(catch))) +
   geom_boxplot() +
@@ -342,7 +344,7 @@ plot_df = joinDF
 n_all_quarters = length(unique(plot_df$time))
 
 mods = plot_df %>% split(f = plot_df$ID) %>% 
-          purrr::map(~ slope_grid(.x, prop_obs = 0.2))
+          purrr::map(~ slope_grid(.x, prop_obs = 0.33))
 
 new_data = data.frame(ID = as.numeric(names(mods)), slope = as.vector(unlist(mods)))
 MyGrid2 = left_join(MyGrid, new_data, by = 'ID')

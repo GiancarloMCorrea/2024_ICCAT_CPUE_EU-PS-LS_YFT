@@ -79,10 +79,16 @@ ggsave(filename = paste0('grid_predictions_glmm', img_type), path = plot_folder,
        width = 170, height = 170, units = 'mm', dpi = img_res)
 
 # Calculate index (weighted sum by area)
-PredTime = PredGrid %>% group_by(year, quarter) %>% summarise(CPUE_est = sum(cpue_pred*cluster_area*portion_on_ocean),
-                                                              CPUE_se = sum(cpue_se*cluster_area*portion_on_ocean))
+PredTime = PredGrid %>% group_by(year, quarter) %>% summarise(CPUE_est2 = sum(cpue_pred*cluster_area*portion_on_ocean),
+                                                              CPUE_se2 = sum(cpue_se*cluster_area*portion_on_ocean))
+# Divide by mean CPUE est:
+PredTime = PredTime %>% mutate(CPUE_est = CPUE_est2/mean(CPUE_est2))
+# Also scale CPUE se:
+PredTime = PredTime %>% mutate(CPUE_se = CPUE_se2*CPUE_est/CPUE_est2)
+# Remove old CPUE est and se:
+PredTime = PredTime %>% select(-c(CPUE_est2, CPUE_se2))
 # Divide by 1e+07:
-PredTime = PredTime %>% mutate(CPUE_est = CPUE_est*1e-07, CPUE_se = CPUE_se*1e-07)
+# PredTime = PredTime %>% mutate(CPUE_est = CPUE_est*1e-07, CPUE_se = CPUE_se*1e-07)
 # Calculate CI predictions:
 PredTime = PredTime %>% mutate(time = as.numeric(as.character(year)) + (as.numeric(as.character(quarter))-1)/4, 
                                lower = CPUE_est - 2*CPUE_se,
